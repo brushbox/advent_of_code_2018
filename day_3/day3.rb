@@ -28,6 +28,11 @@ claims = $stdin.readlines.map { |line|
 def claim(fabric, left, top, width, height)
   x = left
   y = top
+  x1 = [0, left].max
+  y1 = [0, top].max
+  x2 = [999, left + width].min
+  y2 = [999, top + height].min
+  puts "Filling #{x1},#{y1}-#{x2},#{y2}"
   width.times do |h|
     height.times do |v|
       plot(fabric, x + h, y + v)
@@ -44,17 +49,26 @@ def plot(fabric, x, y)
                  end
 end
 
+def count(fabric, what)
+  fabric.map { |row|
+    row.select { |inch| inch == what }.size
+  }.sum
+end
+
+def consumed(fabric)
+  count(fabric, :multiple)
+end
+
+def singles(fabric)
+  count(fabric, :filled)
+end
+
 fabric = Array.new(1000) { Array.new(1000, :empty) }
 
 claims.each do |claim, r|
   claim(fabric, r.l, r.t, r.w, r.h)
 end
-
-consumed = fabric.map { |row|
-  row.map { |inch| inch == :multiple ? 1 : 0 }.sum
-}.sum
-
-puts consumed
+puts consumed(fabric)
 
 overlaps = (0...claims.size).map do |index|
   claim, rect = claims[index]
