@@ -7,6 +7,8 @@ mod shift;
 use chrono::prelude::*;
 use event::Event;
 
+use shift::Shift;
+
 use std::fs::File;
 use std::io::{self, BufRead, BufReader};
 
@@ -28,7 +30,10 @@ fn parse_datetime(s : &str) -> DateTime<Local> {
     let h = t_pieces[0];
     let min = t_pieces[1];
 
-    Local.ymd(y, m, d).and_hms(h, min, 0)
+    print!("{} {} {} - {}:{}", y, m, d, h, min);
+    let l = Local.ymd(y, m, d).and_hms(h, min, 0);
+    println!(" => {}", l);
+    l
 }
 
 fn parse_line(line : &str) -> (DateTime<Local>, Event) {
@@ -155,13 +160,14 @@ mod tests {
         assert_eq!(true, match ev { Event::StartShift(_) => true, _ => false});
     }
 
-    // #[test]
-    // fn shifts_are_calculated_properly() {
-    //     let lines = lines_from_file("input.txt");
-    //     let data = parse_lines(lines);
-    //     let shifts = Shift::from_events(&data);
+    #[test]
+    fn shifts_are_calculated_properly() {
+        let lines = lines_from_file("input.txt");
+        let data = parse_lines(lines);
+        let shifts = Shift::from_events(&data);
 
-    //     assert_eq!(shifts[0], Shift{month:11,day:1,guard:10, activity: ".....####################.....#########################.....".to_string()});
-    //     assert_eq!(shifts[shifts.len()-1], Shift{month:11,day:5,guard:99, activity: ".............................................##########.....".to_string()});
-    // }
+        assert!(false);
+        // assert_eq!(shifts[0], Shift{month:11,day:1,guard:10, activity: ".....####################.....#########################.....".to_string()});
+        // assert_eq!(shifts[shifts.len()-1], Shift{month:11,day:5,guard:99, activity: ".............................................##########.....".to_string()});
+    }
 }

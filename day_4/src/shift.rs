@@ -15,7 +15,7 @@ enum GuardState {
 #[derive(Clone)]
 // #[derive(PartialEq)]
 // #[derive(Eq)]
-struct Shift {
+pub struct Shift {
   when : DateTime<Local>,
   guard_id : u32,
   activity : Activity,
@@ -27,7 +27,7 @@ impl Shift {
       Shift { when: dt, guard_id: id, activity: Activity::new(dt), state: GuardState::Awake }
     }
 
-    fn from_events(events : &Vec<(DateTime<Local>, Event)>) -> Vec<Shift> {
+    pub fn from_events(events : &Vec<(DateTime<Local>, Event)>) -> Vec<Shift> {
       let mut result : Vec<Shift> = Vec::new();
 
       if events.is_empty() {
@@ -96,7 +96,6 @@ impl Shift {
 
     fn wake_up(&mut self, dt :DateTime<Local>) {
       if let GuardState::Asleep(start) = self.state { 
-        println!("Recording sleep...");
         self.activity.record_sleep(&start, &dt);
         self.state = GuardState::Awake
       }
