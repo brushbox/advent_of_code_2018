@@ -1,94 +1,14 @@
 extern crate chrono;
 
 mod activity;
+mod event;
 mod shift;
 
 use chrono::prelude::*;
+use event::Event;
 
 use std::fs::File;
 use std::io::{self, BufRead, BufReader};
-
-#[derive(Debug)]
-#[derive(PartialEq)]
-enum Event {
-    StartShift(u32),
-    FallAsleep,
-    WakeUp
-}
-
-impl Event {
-    fn parse(s : &str) -> Event {
-        match s.chars().next().unwrap() {
-            'G' => {
-                let split : Vec<_> = s.split(' ').collect();
-                let guard_id_str : String = split[1].chars().skip(1).collect();
-                let guard_id : u32 = guard_id_str.parse().unwrap();
-                Event::StartShift(guard_id)
-            },
-            'f' => Event::FallAsleep,
-            'w' => Event::WakeUp,
-            _ => panic!("Unexpected event")
-        }
-    }
-}
-
-// #[derive(Debug)]
-// #[derive(PartialEq)]
-// #[derive(Eq)]
-// struct Shift {
-//     month: u32,
-//     day: u32,
-//     guard: u32,
-//     activity: String
-// }
-
-// impl Shift {
-//     fn from_events(events : &Vec<(Timestamp, Event)>) -> Vec<Shift> {
-//         let (ts,ev) = events[0];
-//         let current_guard = match ev {
-//             Event::StartShift(id) => id,
-//             _ => panic!("first event should be StartShift");
-//         };
-//         // let mut guard_awake_at = (ts.date.month,ts.date.day,ts.time.hour,ts.time.minute);
-//         let mut result = Vec::new();
-//         let evs = events.iter().skip(1);
-//         let mut activity = Activity::new(ts);
-//         // let mut activity = "............................................................".to_string();
-//         let mut first_date = ts;
-//         let mut current_date = first_date;
-//         let mut sleep_starts : Option<Timestamp> = None;
-
-//         for (ts, ev) in evs {
-//             match ev {
-//                 Event::StartShift(id) => {
-//                     if let Some(start_time) = sleep_starts {
-//                         activity.sleep_period(start_time, ts);
-//                     }
-//                     result.push(
-//                         Shift{
-//                             month: shift_month(first_date, current_date),
-//                             day: shift_day(first_date, current_date),
-//                             guard: current_guard,
-//                             activity: activity
-//                         });
-
-//                     current_guard = id;
-//                     current_date = ts;
-//                     first_date = current_date;
-//                     activity = Activity::new(ts); //"............................................................".to_string();
-//                     sleep_starts = None;
-//                 },
-//                 Event::FallAsleep => {
-//                     sleep_starts = Some(ts);
-//                 },
-//                 Event::WakeUp => {
-//                     activity.sleep_period(sleep_starts, ts);
-//                 },
-//             }
-//         }
-//         result
-//     }
-// }
 
 fn main() {
     println!("Hello, world!");

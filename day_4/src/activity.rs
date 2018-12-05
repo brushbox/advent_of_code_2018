@@ -3,13 +3,15 @@ use chrono::prelude::*;
 use chrono::Duration;
 use std::collections::HashMap;
 
+#[derive(Debug)]
+#[derive(Clone)]
 pub struct Activity {
   started_at : DateTime<Local>,
   activity : HashMap<u32, bool>
 }
 
 impl Activity {
-  fn new(dt : DateTime<Local>) -> Activity {
+  pub fn new(dt : DateTime<Local>) -> Activity {
     let a = HashMap::new();
     Activity { 
       started_at: dt,
@@ -17,7 +19,22 @@ impl Activity {
     }
   }
 
-  fn chart(&self) -> String {
+  pub fn record_sleep(&mut self, start : &DateTime<Local>, stop : &DateTime<Local>) {
+    let first = self.clamp_start(start);
+    let last = self.clamp_stop(stop);
+
+    println!("Between {} and {}", first, last);
+
+    let one_minute = Duration::minutes(1);
+    let mut now = first;
+    while now < last {
+      self.activity.insert(now.minute(), true);
+      // self.activity[now.minute()] = '#';
+      now = now.checked_add_signed(one_minute).unwrap();
+    }
+  }
+
+  pub fn chart(&self) -> String {
     let mut result = String::with_capacity(60);
     for m in 0..60 {
       if *self.activity.get(&m).unwrap_or(&false) {
@@ -30,7 +47,7 @@ impl Activity {
     result
   }
 
-  fn shift_date(&self) -> Date<Local> {
+  pub fn shift_date(&self) -> Date<Local> {
     if self.is_before_shift(&self.started_at) {
       self.started_at.date().succ()
     } else {
@@ -40,19 +57,6 @@ impl Activity {
 
   fn is_before_shift(&self, date_time : &DateTime<Local>) -> bool {
     date_time.hour() != 0
-  }
-
-  fn record_sleep(&mut self, start : &DateTime<Local>, stop : &DateTime<Local>) {
-    let first = self.clamp_start(start);
-    let last = self.clamp_stop(stop);
-
-    let one_minute = Duration::minutes(1);
-    let mut now = first;
-    while now < last {
-      self.activity.insert(now.minute(), true);
-      // self.activity[now.minute()] = '#';
-      now = now.checked_add_signed(one_minute).unwrap();
-    }
   }
 
   fn clamp_start(&self, start : &DateTime<Local>) -> DateTime<Local> {
