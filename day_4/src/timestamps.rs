@@ -19,6 +19,7 @@ impl Date {
 impl Ord for Date {
     fn cmp(&self, other: &Self) -> Ordering {
         match self.year.cmp(&other.year) {
+          
             Ordering::Equal => {
                 match self.month.cmp(&other.month) {
                     Ordering::Equal => self.day.cmp(&other.day),

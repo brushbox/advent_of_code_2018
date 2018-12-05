@@ -1,11 +1,11 @@
+extern crate chrono;
+
 mod activity;
-mod timestamps;
+
+use chrono::prelude::*;
 
 use std::fs::File;
 use std::io::{self, BufRead, BufReader};
-
-use timestamps::{*};
-use timestamps::Timestamp;
 
 #[derive(Debug)]
 #[derive(PartialEq)]
@@ -93,19 +93,36 @@ fn main() {
     println!("Hello, world!");
 }
 
-fn parse_line(line : &str) -> (Timestamp, Event) {
+fn parse_datetime(s : &str) -> DateTime<Local> {
+    let ts_pieces : Vec<_> = s.split(' ').collect();
+    let ymd = ts_pieces[0];
+    let hm = ts_pieces[1];
+
+    let d_pieces : Vec<_> = ymd.split('-').map(|comp| comp.parse::<u32>().unwrap()).collect();
+    let y = d_pieces[0] as i32;
+    let m = d_pieces[1];
+    let d = d_pieces[2];
+
+    let t_pieces : Vec<_> = hm.split(':').map(|comp| comp.parse::<u32>().unwrap()).collect();
+    let h = t_pieces[0];
+    let min = t_pieces[1];
+
+    Local.ymd(y, m, d).and_hms(h, min, 0)
+}
+
+fn parse_line(line : &str) -> (DateTime<Local>, Event) {
     let pieces : Vec<_> = line.split(']').collect();
 
     let ts_str : String = pieces[0].chars().skip(1).collect();
-    let ts = Timestamp::parse(&ts_str);
+    let dt = parse_datetime(&ts_str);
 
     let ev_str : String = pieces[1].chars().skip(1).collect();
     let ev = Event::parse(&ev_str);
 
-    (ts, ev)
+    (dt, ev)
 }
 
-fn parse_lines(lines : Vec<String>) -> Vec<(Timestamp, Event)> {
+fn parse_lines(lines : Vec<String>) -> Vec<(DateTime<Local>, Event)> {
     let mut entries = lines.iter().map(|line| parse_line(line)).collect::<Vec<_>>();
     entries.sort_by(|(a,_), (b,_)| a.cmp(b));
     entries
@@ -120,14 +137,14 @@ fn lines_from_file(filename : &str) -> Vec<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use timestamps::*;
+    // use timestamps::*;
 
     #[test]
     fn parsing_a_line_returns_a_timestamp_event_tuple() {
         let line = "[2018-12-04 17:37] Guard #10 begins shift";
-        let (ts, ev)= parse_line(line);
+        let (dt, ev)= parse_line(line);
 
-        assert_eq!(ts, Timestamp{date: Date{year: 2018, month: 12, day: 4}, time: Time {hour: 17, minute: 37}});
+        assert_eq!(dt, Local.ymd(2018, 12, 4).and_hms(17, 37, 0)); 
         assert_eq!(ev, Event::StartShift(10));
     }
 
@@ -195,8 +212,8 @@ mod tests {
         let (ts_last, _) = &data[data.len()-1];
 
         println!("{:?}", data);
-        assert_eq!(*ts_first, Timestamp{date: Date{year:1518, month: 11, day: 1}, time: Time {hour: 0, minute: 0}});
-        assert_eq!(*ts_last, Timestamp{date: Date{year:1518, month: 11, day: 5}, time: Time {hour: 0, minute: 55}});
+        assert_eq!(*ts_first, Local.ymd(1518, 11, 1).and_hms(0, 0, 0)); // Timestamp{date: Date{year:1518, month: 11, day: 1}, time: Time {hour: 0, minute: 0}});
+        assert_eq!(*ts_last, Local.ymd(1518, 11, 5).and_hms(0, 55, 0)); // Timestamp{date: Date{year:1518, month: 11, day: 5}, time: Time {hour: 0, minute: 55}});
     }
 
     #[test]

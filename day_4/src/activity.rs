@@ -1,11 +1,12 @@
-use timestamps::{Date, Time, Timestamp};
+// use timestamps::{Date, Time, Timestamp};
+use chrono::prelude::*;
 
 pub struct Activity {
-  started_at : Timestamp
+  started_at : DateTime<Local>
 }
 
 impl Activity {
-  fn new(ts : Timestamp) -> Activity {
+  fn new(ts : DateTime<Local>) -> Activity {
     Activity { started_at: ts }
   }
 
@@ -13,20 +14,23 @@ impl Activity {
     "............................................................".to_string()
   }
 
-  fn shift_date(&self) -> (u32, u32) {
-    if self.is_before_shift(&self.started_at.time) {
-      (self.started_at.date.month, self.started_at.date.day + 1)
+  fn shift_date(&self) -> Date<Local> {
+    if self.is_before_shift(&self.started_at) {
+
+      self.started_at.date().succ()
+      // (self.started_at.date.month, self.started_at.date.day + 1)
     } else {
-      (self.started_at.date.month, self.started_at.date.day)
+      self.started_at.date()
+      // (self.started_at.date.month, self.started_at.date.day)
     }
   }
 
-  fn is_before_shift(&self, time : &Time) -> bool {
-    time.hour != 0
+  fn is_before_shift(&self, date_time : &DateTime<Local>) -> bool {
+    date_time.hour() != 0
   }
 
-  fn record_sleep(&mut self, start : &Time, stop : &Time) {
-    
+  fn record_sleep(&mut self, start : &DateTime<Local>, stop : &DateTime<Local>) {
+
   }
 }
 
@@ -36,18 +40,18 @@ mod tests {
 
     #[test]
     fn a_blank_activity_is_awake_for_the_whole_shift() {
-      let activity = Activity::new(Timestamp{date:Date{year:2018,month:11,day:1},time:Time{hour:23,minute:56}});
+      let activity = Activity::new(Local.ymd(2018, 11, 1).and_hms(23, 25, 0));
 
       assert_eq!(activity.chart(), "............................................................".to_string());
     }
 
     #[test]
     fn the_date_of_a_shift_reflects_the_next_or_current_midnight_period() {
-      let activity = Activity::new(Timestamp{date:Date{year:2018,month:11,day:1},time:Time{hour:23,minute:56}});
+      let activity = Activity::new(Local.ymd(2018, 11, 1).and_hms(23, 56, 0));
 
-      assert_eq!(activity.shift_date(), (11,2));
+      assert_eq!(activity.shift_date(), Local.ymd(2018, 11, 2));
 
-      let activity = Activity::new(Timestamp{date:Date{year:2018,month:11,day:1},time:Time{hour:00,minute:06}});
-      assert_eq!(activity.shift_date(), (11,1));
+      let activity = Activity::new(Local.ymd(2018, 11, 1).and_hms(0, 6, 0));
+      assert_eq!(activity.shift_date(), Local.ymd(2018, 11, 1));
     }
 }
