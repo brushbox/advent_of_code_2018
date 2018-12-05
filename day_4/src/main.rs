@@ -1,6 +1,11 @@
+mod activity;
+mod timestamps;
+
 use std::fs::File;
 use std::io::{self, BufRead, BufReader};
-use std::cmp::Ordering;
+
+use timestamps::{*};
+use timestamps::Timestamp;
 
 #[derive(Debug)]
 #[derive(PartialEq)]
@@ -26,115 +31,63 @@ impl Event {
     }
 }
 
+// #[derive(Debug)]
+// #[derive(PartialEq)]
+// #[derive(Eq)]
+// struct Shift {
+//     month: u32,
+//     day: u32,
+//     guard: u32,
+//     activity: String
+// }
 
-#[derive(Debug)]
-#[derive(PartialEq)]
-#[derive(Eq)]
-struct Date {
-    year : u32,
-    month : u32,
-    day : u32,
-}
+// impl Shift {
+//     fn from_events(events : &Vec<(Timestamp, Event)>) -> Vec<Shift> {
+//         let (ts,ev) = events[0];
+//         let current_guard = match ev {
+//             Event::StartShift(id) => id,
+//             _ => panic!("first event should be StartShift");
+//         };
+//         // let mut guard_awake_at = (ts.date.month,ts.date.day,ts.time.hour,ts.time.minute);
+//         let mut result = Vec::new();
+//         let evs = events.iter().skip(1);
+//         let mut activity = Activity::new(ts);
+//         // let mut activity = "............................................................".to_string();
+//         let mut first_date = ts;
+//         let mut current_date = first_date;
+//         let mut sleep_starts : Option<Timestamp> = None;
 
-impl Date {
-    fn parse(s : &str) -> Date {
-        let pieces : Vec<_> = s.split('-').map(|comp| comp.parse::<u32>().unwrap()).collect();
-        Date { year: pieces[0], month: pieces[1], day: pieces[2] }
-    }
-}
+//         for (ts, ev) in evs {
+//             match ev {
+//                 Event::StartShift(id) => {
+//                     if let Some(start_time) = sleep_starts {
+//                         activity.sleep_period(start_time, ts);
+//                     }
+//                     result.push(
+//                         Shift{
+//                             month: shift_month(first_date, current_date),
+//                             day: shift_day(first_date, current_date),
+//                             guard: current_guard,
+//                             activity: activity
+//                         });
 
-impl Ord for Date {
-    fn cmp(&self, other: &Self) -> Ordering {
-        match self.year.cmp(&other.year) {
-            Ordering::Equal => {
-                match self.month.cmp(&other.month) {
-                    Ordering::Equal => self.day.cmp(&other.day),
-                    order => order
-                }
-            },
-            order => order
-        }
-    }
-}
-
-impl PartialOrd for Date {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(self.cmp(other))
-    }
-}
-
-#[derive(Debug)]
-#[derive(PartialEq)]
-#[derive(Eq)]
-struct Time {
-    hour: u32,
-    minute: u32
-}
-
-impl Time {
-    fn parse(s : &str) -> Time {
-        let pieces : Vec<_> = s.split(':').map(|comp| comp.parse::<u32>().unwrap()).collect();
-        Time { hour: pieces[0], minute: pieces[1] }
-    }
-}
-
-impl Ord for Time {
-    fn cmp(&self, other: &Self) -> Ordering {
-        match self.hour.cmp(&other.hour) {
-            Ordering::Equal => self.minute.cmp(&other.minute),
-            order => order
-        }
-    }
-}
-
-impl PartialOrd for Time {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(self.cmp(other))
-    }
-}
-
-#[derive(Debug)]
-#[derive(PartialEq)]
-#[derive(Eq)]
-struct Timestamp {
-    date : Date,
-    time : Time
-    // year : u32,
-    // month : u32,
-    // day : u32,
-    // hour : u32,
-    // minute : u32
-}
-
-impl Timestamp {
-    fn parse(s : &str) -> Timestamp {
-        let ts_pieces : Vec<_> = s.split(' ').collect();
-        let ymd = ts_pieces[0];
-        let hm = ts_pieces[1];
-
-        let date = Date::parse(ymd);
-        let time = Time::parse(hm);
-        // let (y, mo, d) = parse_ymd(ymd);
-        // let (h, mi) = parse_hm(hm);
-
-        Timestamp {date: date, time: time }
-    }
-}
-
-impl Ord for Timestamp {
-    fn cmp(&self, other: &Self) -> Ordering {
-        match self.date.cmp(&other.date) {
-            Ordering::Equal => self.time.cmp(&other.time),
-            order => order
-        }
-    }
-}
-
-impl PartialOrd for Timestamp {
-    fn partial_cmp(&self, other :&Self) -> Option<Ordering> {
-        Some(self.cmp(other))
-    }
-}
+//                     current_guard = id;
+//                     current_date = ts;
+//                     first_date = current_date;
+//                     activity = Activity::new(ts); //"............................................................".to_string();
+//                     sleep_starts = None;
+//                 },
+//                 Event::FallAsleep => {
+//                     sleep_starts = Some(ts);
+//                 },
+//                 Event::WakeUp => {
+//                     activity.sleep_period(sleep_starts, ts);
+//                 },
+//             }
+//         }
+//         result
+//     }
+// }
 
 fn main() {
     println!("Hello, world!");
@@ -167,6 +120,7 @@ fn lines_from_file(filename : &str) -> Vec<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use timestamps::*;
 
     #[test]
     fn parsing_a_line_returns_a_timestamp_event_tuple() {
@@ -262,4 +216,14 @@ mod tests {
 
         assert_eq!(true, match ev { Event::StartShift(_) => true, _ => false});
     }
+
+    // #[test]
+    // fn shifts_are_calculated_properly() {
+    //     let lines = lines_from_file("input.txt");
+    //     let data = parse_lines(lines);
+    //     let shifts = Shift::from_events(&data);
+
+    //     assert_eq!(shifts[0], Shift{month:11,day:1,guard:10, activity: ".....####################.....#########################.....".to_string()});
+    //     assert_eq!(shifts[shifts.len()-1], Shift{month:11,day:5,guard:99, activity: ".............................................##########.....".to_string()});
+    // }
 }
