@@ -1,27 +1,40 @@
 // use timestamps::{Date, Time, Timestamp};
 use chrono::prelude::*;
+use chrono::Duration;
+use std::collections::HashMap;
 
 pub struct Activity {
-  started_at : DateTime<Local>
+  started_at : DateTime<Local>,
+  activity : HashMap<u32, bool>
 }
 
 impl Activity {
-  fn new(ts : DateTime<Local>) -> Activity {
-    Activity { started_at: ts }
+  fn new(dt : DateTime<Local>) -> Activity {
+    let a = HashMap::new();
+    Activity { 
+      started_at: dt,
+      activity:  a
+    }
   }
 
   fn chart(&self) -> String {
-    "............................................................".to_string()
+    let mut result = String::with_capacity(60);
+    for m in 0..60 {
+      if *self.activity.get(&m).unwrap_or(&false) {
+        result.push('#');
+      }
+      else {
+        result.push('.');
+      }
+    }
+    result
   }
 
   fn shift_date(&self) -> Date<Local> {
     if self.is_before_shift(&self.started_at) {
-
       self.started_at.date().succ()
-      // (self.started_at.date.month, self.started_at.date.day + 1)
     } else {
       self.started_at.date()
-      // (self.started_at.date.month, self.started_at.date.day)
     }
   }
 
@@ -30,7 +43,34 @@ impl Activity {
   }
 
   fn record_sleep(&mut self, start : &DateTime<Local>, stop : &DateTime<Local>) {
+    let first = self.clamp_start(start);
+    let last = self.clamp_stop(stop);
 
+    let one_minute = Duration::minutes(1);
+    let mut now = first;
+    while now < last {
+      self.activity.insert(now.minute(), true);
+      // self.activity[now.minute()] = '#';
+      now = now.checked_add_signed(one_minute).unwrap();
+    }
+  }
+
+  fn clamp_start(&self, start : &DateTime<Local>) -> DateTime<Local> {
+    if start < &self.shift_date().and_hms(0, 0, 0) {
+      self.shift_date().and_hms(0, 0, 0)
+    }
+    else {
+      *start
+    }
+  }
+
+  fn clamp_stop(&self, stop : &DateTime<Local>) -> DateTime<Local> {
+    if stop >= &self.shift_date().and_hms(1, 0, 0) {
+      self.shift_date().and_hms(1, 0, 0)
+    }
+    else {
+      *stop
+    }
   }
 }
 
@@ -53,5 +93,28 @@ mod tests {
 
       let activity = Activity::new(Local.ymd(2018, 11, 1).and_hms(0, 6, 0));
       assert_eq!(activity.shift_date(), Local.ymd(2018, 11, 1));
+    }
+
+    #[test]
+    fn sleep_is_recorded() {
+      let mut activity = Activity::new(Local.ymd(2018, 11, 1).and_hms(23, 56, 0));
+      activity.record_sleep(
+        &Local.ymd(2018, 11, 2).and_hms(0, 12, 0),
+        &Local.ymd(2018, 11, 2).and_hms(0, 20, 0));
+
+      assert_eq!(activity.chart(), "............########........................................".to_string());
+    }
+
+    #[test]
+    fn out_of_bounds_sleeps_are_truncated() {
+      let mut activity = Activity::new(Local.ymd(2018, 11, 1).and_hms(23, 45, 0));
+      activity.record_sleep(
+        &Local.ymd(2018, 11, 1).and_hms(23, 56, 0),
+        &Local.ymd(2018, 11, 2).and_hms(0, 6, 0));
+      activity.record_sleep(
+        &Local.ymd(2018, 11, 2).and_hms(0, 58, 0),
+        &Local.ymd(2018, 11, 2).and_hms(1, 3, 0));
+
+      assert_eq!(activity.chart(), "######....................................................##".to_string());
     }
 }

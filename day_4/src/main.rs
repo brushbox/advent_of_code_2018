@@ -1,6 +1,7 @@
 extern crate chrono;
 
 mod activity;
+mod shift;
 
 use chrono::prelude::*;
 
