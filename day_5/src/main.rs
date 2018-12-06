@@ -60,12 +60,18 @@ fn remove_and_reduce(s : String) -> Vec<(char, usize)> {
     res
 }
 
-fn part1() -> std::io::Result<()> {
-    let mut f = File::open("input.txt")?;
+fn read_file(filename : &str) -> std::io::Result<String> {
+    let mut f = File::open(filename)?;
     let mut p = String::new();
     f.read_to_string(&mut p)?;
 
     p = p.trim().to_string();
+
+    Ok(p)
+}
+
+fn part1() -> std::io::Result<()> {
+    let p = read_file("input.txt")?;
     let reduced = p_reduce(p);
 
     println!("Part1: {}", reduced.len());
@@ -74,11 +80,7 @@ fn part1() -> std::io::Result<()> {
 }
 
 fn part2() -> std::io::Result<()> {
-    let mut f = File::open("input.txt")?;
-    let mut p = String::new();
-    f.read_to_string(&mut p)?;
-
-    p = p.trim().to_string();
+    let p = read_file("input.txt")?;
 
     let mut results = remove_and_reduce(p);
 
