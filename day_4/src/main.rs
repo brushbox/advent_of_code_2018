@@ -16,7 +16,7 @@ fn main() {
     println!("Hello, world!");
 }
 
-fn parse_datetime(s : &str) -> DateTime<Local> {
+fn parse_datetime(s : &str) -> NaiveDateTime {
     let ts_pieces : Vec<_> = s.split(' ').collect();
     let ymd = ts_pieces[0];
     let hm = ts_pieces[1];
@@ -31,12 +31,12 @@ fn parse_datetime(s : &str) -> DateTime<Local> {
     let min = t_pieces[1];
 
     print!("{} {} {} - {}:{}", y, m, d, h, min);
-    let l = Local.ymd(y, m, d).and_hms(h, min, 0);
+    let l = NaiveDate::from_ymd(y, m, d).and_hms(h, min, 0);
     println!(" => {}", l);
     l
 }
 
-fn parse_line(line : &str) -> (DateTime<Local>, Event) {
+fn parse_line(line : &str) -> (NaiveDateTime, Event) {
     let pieces : Vec<_> = line.split(']').collect();
 
     let ts_str : String = pieces[0].chars().skip(1).collect();
@@ -48,7 +48,7 @@ fn parse_line(line : &str) -> (DateTime<Local>, Event) {
     (dt, ev)
 }
 
-fn parse_lines(lines : Vec<String>) -> Vec<(DateTime<Local>, Event)> {
+fn parse_lines(lines : Vec<String>) -> Vec<(NaiveDateTime, Event)> {
     let mut entries = lines.iter().map(|line| parse_line(line)).collect::<Vec<_>>();
     entries.sort_by(|(a,_), (b,_)| a.cmp(b));
     entries
@@ -70,7 +70,7 @@ mod tests {
         let line = "[2018-12-04 17:37] Guard #10 begins shift";
         let (dt, ev)= parse_line(line);
 
-        assert_eq!(dt, Local.ymd(2018, 12, 4).and_hms(17, 37, 0)); 
+        assert_eq!(dt, NaiveDate::from_ymd(2018, 12, 4).and_hms(17, 37, 0)); 
         assert_eq!(ev, Event::StartShift(10));
     }
 
@@ -138,8 +138,8 @@ mod tests {
         let (ts_last, _) = &data[data.len()-1];
 
         println!("{:?}", data);
-        assert_eq!(*ts_first, Local.ymd(1518, 11, 1).and_hms(0, 0, 0)); // Timestamp{date: Date{year:1518, month: 11, day: 1}, time: Time {hour: 0, minute: 0}});
-        assert_eq!(*ts_last, Local.ymd(1518, 11, 5).and_hms(0, 55, 0)); // Timestamp{date: Date{year:1518, month: 11, day: 5}, time: Time {hour: 0, minute: 55}});
+        assert_eq!(*ts_first, NaiveDate::from_ymd(1518, 11, 1).and_hms(0, 0, 0)); // Timestamp{date: Date{year:1518, month: 11, day: 1}, time: Time {hour: 0, minute: 0}});
+        assert_eq!(*ts_last, NaiveDate::from_ymd(1518, 11, 5).and_hms(0, 55, 0)); // Timestamp{date: Date{year:1518, month: 11, day: 5}, time: Time {hour: 0, minute: 55}});
     }
 
     #[test]
@@ -166,8 +166,8 @@ mod tests {
         let data = parse_lines(lines);
         let shifts = Shift::from_events(&data);
 
-        assert!(false);
-        // assert_eq!(shifts[0], Shift{month:11,day:1,guard:10, activity: ".....####################.....#########################.....".to_string()});
-        // assert_eq!(shifts[shifts.len()-1], Shift{month:11,day:5,guard:99, activity: ".............................................##########.....".to_string()});
+        // assert!(false);
+        assert_eq!(shifts[0], Shift{month:11,day:1,guard:10, activity: ".....####################.....#########################.....".to_string()});
+        assert_eq!(shifts[shifts.len()-1], Shift{month:11,day:5,guard:99, activity: ".............................................##########.....".to_string()});
     }
 }

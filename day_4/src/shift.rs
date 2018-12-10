@@ -1,13 +1,11 @@
 use activity::Activity;
 use event::Event;
 use chrono::prelude::*;
-// use chrono::DateTime;
-// use chrono::offset::Local;
 
 #[derive(Debug)]
 #[derive(Clone)]
 enum GuardState {
-  Asleep(DateTime<Local>),
+  Asleep(NaiveDateTime),
   Awake
 }
 
@@ -16,18 +14,18 @@ enum GuardState {
 // #[derive(PartialEq)]
 // #[derive(Eq)]
 pub struct Shift {
-  when : DateTime<Local>,
+  when : NaiveDateTime,
   guard_id : u32,
   activity : Activity,
   state : GuardState
 }
 
 impl Shift {
-    fn new(dt : DateTime<Local>, id : u32) -> Shift {
+    fn new(dt : NaiveDateTime, id : u32) -> Shift {
       Shift { when: dt, guard_id: id, activity: Activity::new(dt), state: GuardState::Awake }
     }
 
-    pub fn from_events(events : &Vec<(DateTime<Local>, Event)>) -> Vec<Shift> {
+    pub fn from_events(events : &Vec<(NaiveDateTime, Event)>) -> Vec<Shift> {
       let mut result : Vec<Shift> = Vec::new();
 
       if events.is_empty() {
@@ -88,13 +86,13 @@ impl Shift {
       !self.is_awake()
     }
 
-    fn fall_asleep(&mut self, dt : DateTime<Local>) {
+    fn fall_asleep(&mut self, dt : NaiveDateTime) {
       if let GuardState::Awake = self.state { 
         self.state = GuardState::Asleep(dt) 
       }
     }
 
-    fn wake_up(&mut self, dt :DateTime<Local>) {
+    fn wake_up(&mut self, dt : NaiveDateTime) {
       if let GuardState::Asleep(start) = self.state { 
         self.activity.record_sleep(&start, &dt);
         self.state = GuardState::Awake
@@ -113,7 +111,7 @@ mod tests {
 
   #[test]
   fn an_empty_input_generates_an_empty_output() {
-    let events : Vec<(DateTime<Local>, Event)> = Vec::new();
+    let events : Vec<(NaiveDateTime, Event)> = Vec::new();
     let shifts = Shift::from_events(&events);
 
     assert!(shifts.is_empty());
@@ -121,8 +119,8 @@ mod tests {
 
   #[test]
   fn a_single_shift_start_means_one_entry_wide_awake() {
-    let events : Vec<(DateTime<Local>, Event)> = vec!(
-      (Local.ymd(2018, 12, 5).and_hms(23, 56, 0), Event::StartShift(10))
+    let events : Vec<(NaiveDateTime, Event)> = vec!(
+      (NaiveDate::from_ymd(2018, 12, 5).and_hms(23, 56, 0), Event::StartShift(10))
     );
     let shifts = Shift::from_events(&events);
 
@@ -133,9 +131,9 @@ mod tests {
 
   #[test]
   fn two_shifts_means_two_wide_awake_entries() {
-    let events : Vec<(DateTime<Local>, Event)> = vec!(
-      (Local.ymd(2018, 12, 5).and_hms(23, 56, 0), Event::StartShift(10)),
-      (Local.ymd(2018, 12, 7).and_hms(0, 3, 0), Event::StartShift(11))
+    let events : Vec<(NaiveDateTime, Event)> = vec!(
+      (NaiveDate::from_ymd(2018, 12, 5).and_hms(23, 56, 0), Event::StartShift(10)),
+      (NaiveDate::from_ymd(2018, 12, 7).and_hms(0, 3, 0), Event::StartShift(11))
     );
     let shifts = Shift::from_events(&events);
     assert_eq!(2, shifts.len());
@@ -149,35 +147,35 @@ mod tests {
 
   #[test]
   fn a_guard_always_starts_awake_on_a_shift() {
-    let shift = Shift::new(Local.ymd(2018, 1, 1).and_hms(0, 0, 0), 1);
+    let shift = Shift::new(NaiveDate::from_ymd(2018, 1, 1).and_hms(0, 0, 0), 1);
 
     assert!(shift.is_awake());
   }
 
   #[test]
   fn when_a_guard_falls_asleep_their_state_is_asleep() {
-    let mut shift = Shift::new(Local.ymd(2018, 1, 1).and_hms(0, 0, 0), 1);
-    shift.fall_asleep(Local.ymd(2018, 1, 1).and_hms(0, 55, 0));
+    let mut shift = Shift::new(NaiveDate::from_ymd(2018, 1, 1).and_hms(0, 0, 0), 1);
+    shift.fall_asleep(NaiveDate::from_ymd(2018, 1, 1).and_hms(0, 55, 0));
 
     assert!(shift.is_asleep());
   }
 
   #[test]
   fn when_a_guard_wakes_up_after_sleeping_the_sleep_is_recorded() {
-    let mut shift = Shift::new(Local.ymd(2018, 1, 1).and_hms(0, 0, 0), 1);
-    shift.fall_asleep(Local.ymd(2018, 1, 1).and_hms(0, 55, 0));
+    let mut shift = Shift::new(NaiveDate::from_ymd(2018, 1, 1).and_hms(0, 0, 0), 1);
+    shift.fall_asleep(NaiveDate::from_ymd(2018, 1, 1).and_hms(0, 55, 0));
 
     assert!(shift.is_asleep());
 
-    shift.wake_up(Local.ymd(2018, 1, 1).and_hms(0, 58, 0));
+    shift.wake_up(NaiveDate::from_ymd(2018, 1, 1).and_hms(0, 58, 0));
 
     assert_eq!(shift.chart(), ".......................................................###..".to_string());
   }
 
   #[test]
   fn when_a_guard_finished_their_shift_asleep_the_sleep_is_recorded() {
-    let mut shift = Shift::new(Local.ymd(2018, 1, 1).and_hms(0, 0, 0), 1);
-    shift.fall_asleep(Local.ymd(2018, 1, 1).and_hms(0, 55, 0));
+    let mut shift = Shift::new(NaiveDate::from_ymd(2018, 1, 1).and_hms(0, 0, 0), 1);
+    shift.fall_asleep(NaiveDate::from_ymd(2018, 1, 1).and_hms(0, 55, 0));
 
     shift.finish();
     assert_eq!(shift.chart(), ".......................................................#####".to_string());
