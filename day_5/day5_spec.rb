@@ -32,15 +32,13 @@ def string_reduce(s)
 end
 
 def remove_and_reduce(p)
-  units(p).map { |u|
-    [u, reduce_without_unit(p, u).size]
-  }.to_h
+  units(p).map { |u| reduce_without_unit(p, u).size }
 end
 
 def part2
   p = File.read("input.txt").chomp
   results = remove_and_reduce(p)
-  shortest = results.values.min
+  shortest = results.min
   puts "Part2: #{shortest}"
 end
 
@@ -92,12 +90,7 @@ RSpec.describe "day 5" do
     context "remove_and_reduce for 'dabAcCaCBAcCcaDA'" do
       it 'returns the expected values' do
         result = remove_and_reduce('dabAcCaCBAcCcaDA')
-        expect(result.to_a).to eq([
-          ['a', 6],
-          ['b', 8],
-          ['c', 4],
-          ['d', 6]
-        ])
+        expect(result).to eq([6, 8, 4, 6])
       end
     end
 
