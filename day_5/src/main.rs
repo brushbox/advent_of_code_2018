@@ -47,17 +47,16 @@ fn units(s : String) -> Vec<char> {
     units.make_ascii_lowercase();
     let mut unit_chars : Vec<_> = units.chars().collect();
     unit_chars.sort();
-    
     unit_chars.dedup();
+
     unit_chars
 }
 
-fn remove_and_reduce(s : String) -> Vec<(char, usize)> {
+fn remove_and_reduce(s : String) -> Vec<usize> {
     let units = units(s.clone());
 
-    let output = units.iter().map(|u| (*u, p_reduce_without_unit(s.clone(), *u).len()));
-    let res : Vec<(char, usize)> = output.collect();
-    res
+    let output = units.iter().map(|u| p_reduce_without_unit(s.clone(), *u).len());
+    output.collect::<Vec<_>>()
 }
 
 fn read_file(filename : &str) -> std::io::Result<String> {
@@ -82,13 +81,9 @@ fn part1() -> std::io::Result<()> {
 fn part2() -> std::io::Result<()> {
     let p = read_file("input.txt")?;
 
-    let mut results = remove_and_reduce(p);
+    let results = remove_and_reduce(p);
 
-    results.sort_by(|(_, s1), (_, s2)| s1.cmp(s2));
-
-    let (_c, s) = results[0];
-
-    println!("Part2: {}", s);
+    println!("Part2: {}", results.iter().min().unwrap());
 
     Ok(())
 }
@@ -146,14 +141,6 @@ mod test {
     #[test]
     fn remove_and_reduce_works() {
         let result = remove_and_reduce("dabAcCaCBAcCcaDA".to_string());
-        assert_eq!(
-            result,
-            vec!(
-                ('a', 6),
-                ('b', 8),
-                ('c', 4),
-                ('d', 6)
-            )
-        );
+        assert_eq!( result, vec!( 6, 8, 4, 6));
     }
 }
