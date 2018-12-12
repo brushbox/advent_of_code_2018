@@ -156,8 +156,8 @@ RSpec.describe "day 12" do
 
     it "is..." do
       # from running the calculations below it becomes apparent that generation "settles down"
-      # such that it increases in count by a constant factor after it reaches generation 92
-      # so, knowing that we can do simple arithmetic to calculate the final answer.
+      # such that it increases by a constant factor after it reaches generation 92
+      # knowing that, we can do simple arithmetic to calculate the final answer.
       # i = 0
       # prev = 0
       # 50_000_000_000.times { |i|
