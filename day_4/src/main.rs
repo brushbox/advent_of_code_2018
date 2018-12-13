@@ -70,7 +70,7 @@ mod tests {
         let line = "[2018-12-04 17:37] Guard #10 begins shift";
         let (dt, ev)= parse_line(line);
 
-        assert_eq!(dt, NaiveDate::from_ymd(2018, 12, 4).and_hms(17, 37, 0)); 
+        assert_eq!(dt, NaiveDate::from_ymd(2018, 12, 4).and_hms(17, 37, 0));
         assert_eq!(ev, Event::StartShift(10));
     }
 
@@ -138,8 +138,8 @@ mod tests {
         let (ts_last, _) = &data[data.len()-1];
 
         println!("{:?}", data);
-        assert_eq!(*ts_first, NaiveDate::from_ymd(1518, 11, 1).and_hms(0, 0, 0)); // Timestamp{date: Date{year:1518, month: 11, day: 1}, time: Time {hour: 0, minute: 0}});
-        assert_eq!(*ts_last, NaiveDate::from_ymd(1518, 11, 5).and_hms(0, 55, 0)); // Timestamp{date: Date{year:1518, month: 11, day: 5}, time: Time {hour: 0, minute: 55}});
+        assert_eq!(*ts_first, NaiveDate::from_ymd(1518, 11, 1).and_hms(0, 0, 0));
+        assert_eq!(*ts_last, NaiveDate::from_ymd(1518, 11, 5).and_hms(0, 55, 0));
     }
 
     #[test]
@@ -167,7 +167,10 @@ mod tests {
         let shifts = Shift::from_events(&data);
 
         // assert!(false);
-        assert_eq!(shifts[0], Shift{month:11,day:1,guard:10, activity: ".....####################.....#########################.....".to_string()});
-        assert_eq!(shifts[shifts.len()-1], Shift{month:11,day:5,guard:99, activity: ".............................................##########.....".to_string()});
+        assert_eq!(shifts[0].guard(), 2141);
+        assert_eq!(shifts[0].chart(), "........................##################################..".to_string());
+
+        assert_eq!(shifts[shifts.len()-1].guard(), 769);
+        assert_eq!(shifts[shifts.len()-1].chart(), "................#################################...........".to_string());
     }
 }

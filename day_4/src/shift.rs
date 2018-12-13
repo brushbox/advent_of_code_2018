@@ -66,7 +66,7 @@ impl Shift {
       self.guard_id
     }
 
-    fn chart(&self) -> String {
+    pub fn chart(&self) -> String {
       self.activity.chart()
     }
 

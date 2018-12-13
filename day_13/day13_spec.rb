@@ -100,13 +100,33 @@ class Track
 
   def move
     # we need to see if any carts bump into each other
-    collision_map = Set.new
-    carts.each do |cart| 
-      cart.move(self)
-      raise "Collision at #{cart.position.inspect}" if collision_map.include?(cart.position)
-      collision_map.add(cart.position)
+    [].tap do |collisions|
+      collision_map = Set.new
+      carts.each do |cart| 
+        cart.move(self)
+        collisions << cart.position if collision_map.include?(cart.position)
+        collision_map.add(cart.position)
+      end
     end
   end
+
+  def track_with_carts
+    track = @track.map { |line| line.dup }
+    carts.each do |cart|
+      x, y = cart.position
+      track[y][x] = dir_to_cart_char(cart.direction)
+    end
+    track.join("\n")
+  end
+
+  def first_hit
+    loop do
+      collisions = move
+      return collisions.first unless collisions.empty?
+    end
+  end
+
+  private
 
   CART_CHARS = "<>^v"
 
@@ -142,15 +162,6 @@ class Track
     when :left, :right then '-'
     when :up, :down then '|'
     end
-  end
-
-  def track_with_carts
-    track = @track.map { |line| line.dup }
-    carts.each do |cart|
-      x, y = cart.position
-      track[y][x] = dir_to_cart_char(cart.direction)
-    end
-    track.join("\n")
   end
 
   def dir_to_cart_char(dir)
@@ -299,10 +310,16 @@ RSpec.describe "day 13" do
     subject(:track) { Track.new(lines) }
 
     it "finds a collision" do
-      13000.times do  |i|
-        puts i
-        track.move
-      end
+      puts track.first_hit.inspect
+    end
+  end
+
+  describe "pt2" do
+    let(:lines) { File.readlines("input.txt") }
+    subject(:track) { Track.new(lines) }
+
+    it "finds the last cart" do
+      puts track.last_man_standing.inspect
     end
   end
 end
