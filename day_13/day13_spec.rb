@@ -82,9 +82,10 @@ class Cart
 end
 
 class Track
-  attr_reader :carts
+  attr_reader :carts, :tick
 
   def initialize(lines)
+    @tick = 0
     @track = lines
     # find carts
     @carts = find_carts
@@ -99,14 +100,31 @@ class Track
   end
 
   def move
-    # we need to see if any carts bump into each other
+    @tick +=1
     [].tap do |collisions|
+      current_carts = @carts.map { |cart| [cart.position, cart] }.to_h
       collision_map = Set.new
       carts.each do |cart| 
         cart.move(self)
         collisions << cart.position if collision_map.include?(cart.position)
         collision_map.add(cart.position)
       end
+      # # now that all the carts have moved we need to check if any have passed through each other
+      # # and if they have we add those two positions as collisions.
+      # # how do we know if carts have passed through each other?
+      # # If a cart is now in a position that was occupied by another cart AND that other cart is
+      # # now in the same position as the first cart was then they should have collided too.
+      # # so we want to add both those positions to the collision list.
+      # carts.each do |cart|
+      #   next if collisions.include?(cart.position) # don't need to check a cart that is already smashed
+      #   if current_carts.key?(cart.position) && current_carts[cart.position] != cart
+      #     other = current_carts[cart.position]
+      #     if current_carts.key?(other.position) && current_carts[other.position] == cart
+      #       collisions << cart.position
+      #       collisions << other.position
+      #     end
+      #   end
+      # end
     end
   end
 
@@ -126,7 +144,20 @@ class Track
     end
   end
 
+  def last_man_standing
+    while carts.size != 1
+      collisions = move
+      remove_carts(collisions) unless collisions.empty?
+    end
+    carts.first.position
+  end
+
   private
+
+  def remove_carts(collisions)
+    @carts = carts.select { |cart| !collisions.include?(cart.position) }
+    puts "#{tick}: removing #{collisions.inspect} #{@carts.size} remain"
+  end
 
   CART_CHARS = "<>^v"
 
@@ -303,6 +334,38 @@ RSpec.describe "day 13" do
         puts track.track_with_carts
       end
     end
+
+    describe "collisions" do
+      context "when the carts are one space apart" do
+        let(:input) {
+          <<~INPUT
+          ->-<-
+          INPUT
+        }
+
+        it "they collide" do
+          collisions = track.move
+
+          expect(collisions.size).to eq 1
+        end
+      end
+
+      context "when the carts are adjacent", :focus do
+        let(:input) {
+          <<~INPUT
+          -><-
+          INPUT
+        }
+
+        it "they collide" do
+          # require "byebug"
+          # byebug
+          collisions = track.move
+
+          expect(collisions.size).to eq 2
+        end
+      end 
+    end
   end
 
   describe "pt1" do
@@ -314,12 +377,14 @@ RSpec.describe "day 13" do
     end
   end
 
-  describe "pt2" do
+  describe "pt2", :pt2 do
     let(:lines) { File.readlines("input.txt") }
     subject(:track) { Track.new(lines) }
 
     it "finds the last cart" do
       puts track.last_man_standing.inspect
+      track.move
+      puts track.carts.first.position.inspect
     end
   end
 end
